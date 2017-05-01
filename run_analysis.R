@@ -1,5 +1,5 @@
 # Used library
-library(plyr)
+library(reshape2)
 
 # Working Directory
 setwd('C:/Users/Toshiba/Documents/R/Coursera/Getting And Cleaning Data')
@@ -12,51 +12,40 @@ download.file(fileUrl,destfile="./data/Dataset.zip")
 # Unzip dataSet to /data directory
 unzip(zipfile="./data/Dataset.zip",exdir="./data")
 
-# Merge the training and test sets to create one data set
-x_train <- read.table("./data/UCI HAR Dataset/train/X_train.txt")
-y_train <- read.table("./data/UCI HAR Dataset/train/y_train.txt")
-subject_train <- read.table("./data/UCI HAR Dataset/train/subject_train.txt")
-
-x_test <- read.table("./data/UCI HAR Dataset/test/X_test.txt")
-y_test <- read.table("./data/UCI HAR Dataset/test/y_test.txt")
-subject_test <- read.table("./data/UCI HAR Dataset/test/subject_test.txt")
-
-# create 'x' data set
-x_data <- rbind(x_train, x_test)
-
-# create 'y' data set
-y_data <- rbind(y_train, y_test)
-
-# create 'subject' data set
-subject_data <- rbind(subject_train, subject_test)
-
-# Extract only the measurements on the mean and standard deviation for each measurement
+# Load activity labels + features
+activityLabels <- read.table("./data/UCI HAR Dataset/activity_labels.txt")
+activityLabels[,2] <- as.character(activityLabels[,2])
 features <- read.table("./data/UCI HAR Dataset/features.txt")
+features[,2] <- as.character(features[,2])
 
-# Get only columns with mean() or std() in their names
-mean_and_std_features <- grep("-(mean|std)\\(\\)", features[, 2])
+# Extract only the data on mean and standard deviation
+featuresWanted <- grep(".*mean.*|.*std.*", features[,2])
+featuresWanted.names <- features[featuresWanted,2]
+featuresWanted.names = gsub('-mean', 'Mean', featuresWanted.names)
+featuresWanted.names = gsub('-std', 'Std', featuresWanted.names)
+featuresWanted.names <- gsub('[-()]', '', featuresWanted.names)
 
-# subset the desired columns
-x_data <- x_data[, mean_and_std_features]
 
-# correct the column names
-names(x_data) <- features[mean_and_std_features, 2]
+# Load the datasets
+train <- read.table("./data/UCI HAR Dataset/train/X_train.txt")[featuresWanted]
+trainActivities <- read.table("./data/UCI HAR Dataset/train/Y_train.txt")
+trainSubjects <- read.table("./data/UCI HAR Dataset/train/subject_train.txt")
+train <- cbind(trainSubjects, trainActivities, train)
 
-# Use descriptive activity names to name the activities in the data set
-activities <- read.table("./data/UCI HAR Dataset/activity_labels.txt")
+test <- read.table("./data/UCI HAR Dataset/test/X_test.txt")[featuresWanted]
+testActivities <- read.table("./data/UCI HAR Dataset/test/Y_test.txt")
+testSubjects <- read.table("./data/UCI HAR Dataset/test/subject_test.txt")
+test <- cbind(testSubjects, testActivities, test)
 
-# Update values with correct activity names
-y_data[, 1] <- activities[y_data[, 1], 2]
+# merge datasets and add labels
+allData <- rbind(train, test)
+colnames(allData) <- c("subject", "activity", featuresWanted.names)
 
-# Correct column name
-names(y_data) <- "activity"
+# turn activities & subjects into factors
+allData$activity <- factor(allData$activity, levels = activityLabels[,1], labels = activityLabels[,2])
+allData$subject <- as.factor(allData$subject)
 
-# Correct column name
-names(subject_data) <- "subject"
+allData.melted <- melt(allData, id = c("subject", "activity"))
+allData.mean <- dcast(allData.melted, subject + activity ~ variable, mean)
 
-# Bind all the data in a single data set
-all_data <- cbind(x_data, y_data, subject_data)
-
-# Tidy data set in txt file
-averages_data <- ddply(all_data, .(subject, activity), function(x) colMeans(x[, 1:66]))
-write.table(averages_data, "./data/UCI HAR Dataset/averages_data.txt", row.name=FALSE)
+write.table(allData.mean, "averages_data.txt", row.names = FALSE, quote = FALSE)

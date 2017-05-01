@@ -8,7 +8,7 @@ The dataset being used is: [Human Activity Recognition Using Smartphones](http:/
 
 The code takes all the data from the website and make a folder with the data to analyze it.
 
-`CodeBook.md` describes the variables, the data, and any transformations or work that was performed to clean up the data.
+`CodeBook.md` describes the identifiers, measurements and variables in the analysis.
 
 `run_analysis.R` contains all the code to perform the analyses.
 
