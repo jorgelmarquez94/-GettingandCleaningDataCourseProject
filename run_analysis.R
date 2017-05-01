@@ -12,7 +12,6 @@ download.file(fileUrl,destfile="./data/Dataset.zip")
 # Unzip dataSet to /data directory
 unzip(zipfile="./data/Dataset.zip",exdir="./data")
 
-
 # Merge the training and test sets to create one data set
 x_train <- read.table("./data/UCI HAR Dataset/train/X_train.txt")
 y_train <- read.table("./data/UCI HAR Dataset/train/y_train.txt")
@@ -31,7 +30,6 @@ y_data <- rbind(y_train, y_test)
 # create 'subject' data set
 subject_data <- rbind(subject_train, subject_test)
 
-
 # Extract only the measurements on the mean and standard deviation for each measurement
 features <- read.table("./data/UCI HAR Dataset/features.txt")
 
@@ -45,7 +43,6 @@ x_data <- x_data[, mean_and_std_features]
 names(x_data) <- features[mean_and_std_features, 2]
 
 # Use descriptive activity names to name the activities in the data set
-###############################################################################
 activities <- read.table("./data/UCI HAR Dataset/activity_labels.txt")
 
 # Update values with correct activity names
